@@ -50,31 +50,58 @@ let adminCity = "Amravati";
 let cityCoords = CITY_DATA[adminCity];
 const userEmail = localStorage.getItem('user_email');
 
-async function loadAdminContext() {
-    if (!userEmail) return;
+async function initDashboard() {
+    console.log("Simulation Dashboard Initializing for:", userEmail);
     try {
-        const snap = await getDoc(doc(db, 'users', userEmail));
-        if (snap.exists()) {
-            const data = snap.data();
-            if (data.city) {
-                adminCity = data.city;
-                document.getElementById('current-city').innerText = adminCity.toUpperCase();
+        console.log("Checking user session...");
+        if (!userEmail) {
+            console.warn("No user email in localStorage - Redirecting to login");
+            window.location.href = '/login';
+            return;
+        }
+
+        console.log("Loading admin context...");
+        const userRef = doc(db, 'users', userEmail);
+        const userSnap = await getDoc(userRef);
+
+        if (userSnap.exists()) {
+            const userData = userSnap.data();
+            console.log("User data loaded:", userData.city);
+            if (userData.city) {
+                adminCity = userData.city;
+                const cityEl = document.getElementById('current-city');
+                if (cityEl) cityEl.innerText = adminCity.toUpperCase();
+
                 if (CITY_DATA[adminCity]) {
                     cityCoords = CITY_DATA[adminCity];
-                } else if (data.city_lat && data.city_lng) {
+                } else if (userData.city_lat && userData.city_lng) {
                     cityCoords = {
-                        lat: data.city_lat, lng: data.city_lng,
+                        lat: userData.city_lat, lng: userData.city_lng,
                         source: `${adminCity} Source`,
-                        srcLat: data.city_lat + 0.05,
-                        srcLng: data.city_lng - 0.04
+                        srcLat: userData.city_lat + 0.05,
+                        srcLng: userData.city_lng - 0.04
                     };
                 }
-                document.getElementById('source-name').innerText = cityCoords.source;
-                if (map) updateMapInfra();
+                const sourceEl = document.getElementById('source-name');
+                if (sourceEl) sourceEl.innerText = cityCoords.source;
+
+                console.log("Initializing map...");
+                initMap();
+
+                console.log("Seeding infrastructure...");
                 await seedDummyInfrastructure();
+
+                console.log("Fetching simulation state...");
+                await fetchState();
             }
+            console.log("Simulation Dashboard initialization complete.");
+        } else {
+            console.error("Admin record not found in Firestore.");
+            showToast("Admin account data missing.");
         }
-    } catch (e) { console.error("Error loading admin context:", e); }
+    } catch (err) {
+        console.error("CRITICAL Simulation Error:", err);
+    }
 }
 
 async function seedDummyInfrastructure() {
@@ -494,11 +521,8 @@ async function resetBilling() {
 }
 
 setInterval(fetchState, 4000);
-window.onload = async () => {
-    await loadAdminContext();
-    initMap();
-    await fetchState();
-};
+// Initialize immediately
+initDashboard();
 
 window.selectNode = selectNode;
 window.toggleNodeParam = toggleNodeParam;

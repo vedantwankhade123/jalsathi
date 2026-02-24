@@ -2,7 +2,11 @@ import { db, doc, getDoc, setDoc, updateDoc, collection, getDocs, onSnapshot } f
 
 const userEmail = localStorage.getItem('user_email');
 const userRole = localStorage.getItem('user_role');
-if (!userEmail || userRole !== 'admin') window.location.href = '/login';
+console.log("Admin Dashboard Module Initializing...");
+if (!userEmail || userRole !== 'admin') {
+    console.warn("Unauthorized access or missing session - Redirecting to login");
+    window.location.href = '/login';
+}
 
 // ---- CITY COORDINATES & SOURCES ----
 const CITY_DATA = {
@@ -104,48 +108,57 @@ async function geocodeCity(city, state) {
     return null;
 }
 
-// ---- LOAD ADMIN ----
-(async () => {
+async function initDashboard() {
+    console.log("initDashboard starting for:", userEmail);
     try {
+        console.log("Fetching admin document...");
         const snap = await getDoc(doc(db, 'users', userEmail));
         if (snap.exists()) {
             adminData = snap.data();
+            console.log("Admin data loaded for city:", adminData.city);
+
             document.getElementById('user-name').innerText = adminData.name;
             document.getElementById('user-city').innerText = `${adminData.city || '—'}, ${adminData.state || ''}`;
             document.getElementById('admin-avatar').src = `https://ui-avatars.com/api/?name=${encodeURIComponent(adminData.name)}&background=2563eb&color=fff&size=64`;
-            document.getElementById('profile-name').innerText = adminData.name;
-            document.getElementById('profile-email').innerText = userEmail;
-            document.getElementById('profile-city').innerText = adminData.city || '—';
-            document.getElementById('profile-state').innerText = adminData.state || '—';
-            document.getElementById('profile-country').innerText = adminData.country || '—';
 
-            // Pre-select state → then populate cities → then select city
+            const profileName = document.getElementById('profile-name');
+            if (profileName) profileName.innerText = adminData.name;
+            const profileEmail = document.getElementById('profile-email');
+            if (profileEmail) profileEmail.innerText = userEmail;
+            const profileCity = document.getElementById('profile-city');
+            if (profileCity) profileCity.innerText = adminData.city || '—';
+            const profileState = document.getElementById('profile-state');
+            if (profileState) profileState.innerText = adminData.state || '—';
+            const profileCountry = document.getElementById('profile-country');
+            if (profileCountry) profileCountry.innerText = adminData.country || '—';
+
             if (adminData.state) {
-                document.getElementById('settings-state').value = adminData.state;
-                populateSettingsCities();
-                if (adminData.city) document.getElementById('settings-city').value = adminData.city;
+                const stateSel = document.getElementById('settings-state');
+                if (stateSel) {
+                    stateSel.value = adminData.state;
+                    populateSettingsCities();
+                    const citySel = document.getElementById('settings-city');
+                    if (citySel && adminData.city) citySel.value = adminData.city;
+                }
             }
 
             adminCity = adminData.city || 'Amravati';
 
-            // Use CITY_DATA if available, else use stored coords, else geocode
             if (CITY_DATA[adminCity]) {
                 cityCoords = CITY_DATA[adminCity];
             } else if (adminData.city_lat && adminData.city_lng) {
-                // Use previously geocoded & stored coordinates
                 cityCoords = {
                     lat: adminData.city_lat, lng: adminData.city_lng,
                     source: `${adminCity} Water Source`, srcLat: adminData.city_lat + 0.06, srcLng: adminData.city_lng - 0.05
                 };
             } else if (adminData.city && adminData.state) {
-                // Geocode the city and store for next time
+                console.log("Geocoding city...");
                 const geo = await geocodeCity(adminData.city, adminData.state);
                 if (geo) {
                     cityCoords = {
                         lat: geo.lat, lng: geo.lng,
                         source: `${adminCity} Water Source`, srcLat: geo.lat + 0.06, srcLng: geo.lng - 0.05
                     };
-                    // Save so we don't geocode every time
                     await updateDoc(doc(db, 'users', userEmail), { city_lat: geo.lat, city_lng: geo.lng });
                 } else {
                     cityCoords = CITY_DATA['Amravati'];
@@ -154,11 +167,19 @@ async function geocodeCity(city, state) {
                 cityCoords = CITY_DATA['Amravati'];
             }
 
+            console.log("Initializing maps...");
             initMaps();
+            console.log("Initializing charts...");
             initCharts();
+            console.log("Dashboard initialization complete.");
+        } else {
+            console.error("Admin record not found in Firestore.");
+            showToast("Admin account data missing.");
         }
-    } catch (e) { console.error(e); }
-})();
+    } catch (e) { console.error("CRITICAL Admin Error:", e); }
+}
+
+initDashboard();
 
 // ---- SIDEBAR NAV ----
 const pageTitles = {

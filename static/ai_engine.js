@@ -17,8 +17,10 @@ const UI = {
 
 // ---- INITIALIZATION ----
 document.addEventListener('DOMContentLoaded', () => {
+    console.log("AI Engine Command Center Initializing...");
     initCharts();
     startMonitoring();
+    console.log("Monitoring started.");
 });
 
 function initCharts() {

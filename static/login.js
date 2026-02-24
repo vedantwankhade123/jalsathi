@@ -113,6 +113,10 @@ document.getElementById('btn-login').addEventListener('click', async () => {
     setLoading(btn, true);
 
     try {
+        console.log("Attempting sign-in for:", email);
+        if (!db) {
+            throw new Error("Firestore is not initialized. Please check backend config.");
+        }
         const snap = await getDoc(doc(db, 'users', email));
         if (!snap.exists()) {
             errorEl.innerText = "Account not found.";
