@@ -1,0 +1,18 @@
+# General
+.DS_Store
+*.log
+*.pyc
+__pycache__/
+
+# Environment
+.env
+venv/
+env/
+
+# Data & Models
+rf_model.pkl
+sensor_data.csv
+
+# Firebase
+.firebase/
+.firebaserc

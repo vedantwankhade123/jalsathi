@@ -1,0 +1,50 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Helper: Check if user is authenticated
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    // Helper: Check if user is the owner of the email
+    function isOwner(email) {
+      return isAuthenticated() && request.auth.token.email == email;
+    }
+
+    // ---- USERS COLLECTION ----
+    match /users/{email} {
+      // Allow read for everyone to support custom login and dashboard views
+      allow read: if true;
+      allow write: if true; 
+    }
+
+    // ---- METERS COLLECTION ----
+    match /meters/{meterId} {
+      // Allow read/write for dashboard and simulation
+      allow read, write: if true;
+    }
+
+    // ---- ADMIN SECRETS COLLECTION ----
+    match /admin_secrets/{secretId} {
+      allow read, update: if true; 
+      allow create, delete: if false;
+    }
+
+    // ---- SIMULATION STATE COLLECTION ----
+    match /sim_state/{id} {
+      allow read, write: if true;
+    }
+
+    // ---- SIMULATION LOGS ----
+    match /sim_logs/{logId} {
+      allow read, write: if true;
+    }
+
+    // ---- FALLBACK: DENY ALL OTHER COLLECTIONS ----
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

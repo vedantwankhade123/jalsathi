@@ -1,0 +1,857 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JALSATHI | Immersive Simulation Control</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <style>
+        :root {
+            --primary: #0f62fe;
+            --primary-glow: rgba(15, 98, 254, 0.2);
+            --bg-light: #f1f5f9;
+            --panel-bg: rgba(255, 255, 255, 0.8);
+            --text-main: #0f172a;
+            --text-dim: #64748b;
+            --danger: #ef4444;
+            --success: #10b981;
+            --warning: #f59e0b;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Outfit', sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-light);
+            color: var(--text-main);
+            height: 100vh;
+            overflow: hidden;
+            display: flex;
+        }
+
+        /* Full Width Map */
+        #simMap {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+            background: #f1f5f9;
+        }
+
+        /* Glassmorphic Sidebar */
+        .sidebar {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            bottom: 20px;
+            width: 320px;
+            background: var(--panel-bg);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(0, 0, 0, 0.05);
+            border-radius: 20px;
+            z-index: 10;
+            display: flex;
+            flex-direction: column;
+            padding: 1.5rem;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+            transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .sidebar.collapsed {
+            transform: translateX(-340px);
+        }
+
+        .controls.collapsed {
+            transform: translateX(400px);
+        }
+
+        .expand-sidebar-btn,
+        .expand-right-btn {
+            position: absolute;
+            top: 20px;
+            width: 45px;
+            height: 45px;
+            background: var(--panel-bg);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(0, 0, 0, 0.05);
+            border-radius: 12px;
+            z-index: 9;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            color: var(--primary);
+            transition: 0.3s;
+        }
+
+        .expand-sidebar-btn {
+            left: 20px;
+        }
+
+        .expand-right-btn {
+            right: 20px;
+        }
+
+        .sidebar.collapsed~.expand-sidebar-btn {
+            display: flex;
+        }
+
+        .controls.collapsed~.expand-right-btn {
+            display: flex;
+        }
+
+        .sidebar-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+        }
+
+        .sidebar-header h2 {
+            font-size: 1.25rem;
+            font-weight: 800;
+            letter-spacing: -0.5px;
+            background: linear-gradient(135deg, var(--text-main) 0%, var(--text-dim) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .toggle-sidebar {
+            background: rgba(0, 0, 0, 0.03);
+            border: 1px solid rgba(0, 0, 0, 0.05);
+            color: var(--text-main);
+            width: 35px;
+            height: 35px;
+            border-radius: 10px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* Node Selector List */
+        .search-container {
+            margin-bottom: 1rem;
+            position: relative;
+        }
+
+        .search-container input {
+            width: 100%;
+            background: rgba(0, 0, 0, 0.03);
+            border: 1px solid rgba(0, 0, 0, 0.05);
+            padding: 0.8rem 1rem 0.8rem 2.5rem;
+            border-radius: 12px;
+            color: var(--text-main);
+            font-size: 0.9rem;
+            outline: none;
+            transition: 0.2s;
+        }
+
+        .search-container i {
+            position: absolute;
+            left: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-dim);
+        }
+
+        .node-list {
+            flex: 1;
+            overflow-y: auto;
+            margin-top: 0.5rem;
+            padding-right: 5px;
+        }
+
+        .node-list::-webkit-scrollbar {
+            width: 4px;
+        }
+
+        .node-list::-webkit-scrollbar-thumb {
+            background: rgba(0, 0, 0, 0.1);
+            border-radius: 10px;
+        }
+
+        /* Filter Section */
+        .layer-filters {
+            margin: 1.5rem 0;
+            padding: 1rem;
+            background: rgba(0, 0, 0, 0.02);
+            border-radius: 15px;
+            border: 1px solid rgba(0, 0, 0, 0.03);
+        }
+
+        .layer-filters h3 {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 0.8rem;
+            color: var(--text-dim);
+        }
+
+        .filter-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 0.5rem;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+
+        .filter-item input {
+            cursor: pointer;
+        }
+
+        /* Status Box */
+        .sim-status-box {
+            position: absolute;
+            bottom: 20px;
+            left: 360px;
+            right: 420px;
+            background: var(--panel-bg);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(0, 0, 0, 0.05);
+            padding: 1rem 1.5rem;
+            border-radius: 15px;
+            z-index: 5;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+        }
+
+        .active-injections {
+            display: flex;
+            gap: 10px;
+            overflow-x: auto;
+        }
+
+        .injection-badge {
+            background: rgba(239, 68, 68, 0.1);
+            color: var(--danger);
+            padding: 4px 10px;
+            border-radius: 6px;
+            font-size: 0.7rem;
+            font-weight: 700;
+            white-space: nowrap;
+            border: 1px solid rgba(239, 68, 68, 0.2);
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .node-item {
+            padding: 1rem;
+            background: rgba(0, 0, 0, 0.02);
+            border: 1px solid rgba(0, 0, 0, 0.03);
+            border-radius: 15px;
+            margin-bottom: 0.8rem;
+            cursor: pointer;
+            transition: 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .node-item:hover {
+            background: rgba(0, 0, 0, 0.05);
+            transform: translateY(-2px);
+            border-color: var(--primary);
+        }
+
+        .node-item.active {
+            background: var(--primary);
+            border-color: var(--primary);
+            color: white;
+            box-shadow: 0 10px 20px var(--primary-glow);
+        }
+
+        .node-info h4 {
+            font-size: 0.9rem;
+            font-weight: 700;
+        }
+
+        .node-info p {
+            font-size: 0.75rem;
+            color: var(--text-dim);
+        }
+
+        .node-item.active .node-info p {
+            color: rgba(255, 255, 255, 0.8);
+        }
+
+        /* Right Control Panel */
+        .controls {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            width: 380px;
+            max-height: calc(100vh - 40px);
+            background: var(--panel-bg);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(0, 0, 0, 0.05);
+            border-radius: 20px;
+            z-index: 10;
+            padding: 1.5rem;
+            overflow-y: auto;
+            display: none;
+            /* Shown when node selected */
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+            transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .controls-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+            padding-bottom: 1rem;
+        }
+
+        .controls-header h2 {
+            font-size: 1.1rem;
+            font-weight: 800;
+        }
+
+        .control-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .control-group h3 {
+            font-size: 0.85rem;
+            font-weight: 700;
+            color: var(--text-dim);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        /* Sliders */
+        .param-row {
+            margin-bottom: 1.25rem;
+        }
+
+        .param-info {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.85rem;
+            margin-bottom: 8px;
+        }
+
+        .param-value {
+            font-weight: 700;
+            color: var(--primary);
+        }
+
+        input[type="range"] {
+            width: 100%;
+            height: 6px;
+            background: rgba(0, 0, 0, 0.05);
+            border-radius: 10px;
+            appearance: none;
+            outline: none;
+        }
+
+        input[type="range"]::-webkit-slider-thumb {
+            appearance: none;
+            width: 18px;
+            height: 18px;
+            background: var(--primary);
+            border-radius: 50%;
+            cursor: pointer;
+            box-shadow: 0 2px 10px var(--primary-glow);
+            transition: 0.2s;
+        }
+
+        /* Toggle Grid */
+        .toggle-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+
+        .toggle-btn {
+            background: rgba(0, 0, 0, 0.03);
+            border: 1px solid rgba(0, 0, 0, 0.03);
+            color: var(--text-main);
+            padding: 0.8rem;
+            border-radius: 12px;
+            cursor: pointer;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 5px;
+            transition: 0.2s;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        .toggle-btn i {
+            font-size: 1.2rem;
+            margin-bottom: 3px;
+        }
+
+        .toggle-btn.active {
+            background: rgba(239, 68, 68, 0.2);
+            border-color: var(--danger);
+            color: var(--danger);
+        }
+
+        .toggle-btn.active.success-mode {
+            background: rgba(16, 185, 129, 0.2);
+            border-color: var(--success);
+            color: var(--success);
+        }
+
+        /* Pipeline Flow Animation */
+        .leaflet-ant-path {
+            fill: none;
+            -webkit-animation: leaflet-ant-path-animation 10s linear infinite;
+            animation: leaflet-ant-path-animation 10s linear infinite;
+        }
+
+        @keyframes leaflet-ant-path-animation {
+            from {
+                stroke-dashoffset: 100%;
+            }
+
+            to {
+                stroke-dashoffset: 0%;
+            }
+        }
+
+        /* Blinking Alert Animation */
+        @keyframes alert-blink {
+            0% {
+                opacity: 1;
+                transform: scale(1.2);
+            }
+
+            50% {
+                opacity: 0.6;
+                transform: scale(1.1);
+                box-shadow: 0 0 20px var(--danger);
+            }
+
+            100% {
+                opacity: 1;
+                transform: scale(1.2);
+            }
+        }
+
+        .meter-icon.alert-node {
+            border-color: var(--danger);
+            background: var(--danger);
+            animation: alert-blink 1.5s infinite ease-in-out;
+        }
+
+        .meter-icon.auto-shutoff {
+            background: #475569 !important;
+            border-color: #1e293b !important;
+            animation: none !important;
+            box-shadow: 0 0 15px rgba(0, 0, 0, 0.3) !important;
+        }
+
+        .pipe-stopped {
+            stroke: #94a3b8 !important;
+            stroke-dasharray: 4, 4 !important;
+            animation: none !important;
+        }
+
+        /* Header Overlay (City Info) */
+        .top-bar {
+            position: absolute;
+            top: 20px;
+            left: 360px;
+            right: 420px;
+            height: 60px;
+            background: var(--panel-bg);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(0, 0, 0, 0.05);
+            border-radius: 15px;
+            z-index: 5;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 1.5rem;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+        }
+
+        .city-info {
+            display: flex;
+            align-items: center;
+            gap: 1.5rem;
+        }
+
+        .city-tag {
+            background: var(--primary);
+            padding: 0.3rem 0.8rem;
+            border-radius: 8px;
+            font-weight: 800;
+            font-size: 0.8rem;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .stat-item {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .stat-item small {
+            font-size: 0.65rem;
+            color: var(--text-dim);
+            text-transform: uppercase;
+        }
+
+        .stat-item span {
+            font-weight: 700;
+            font-size: 0.9rem;
+        }
+
+        /* Marker Styles */
+        .meter-icon {
+            width: 32px;
+            height: 32px;
+            background: #fff;
+            border: 2px solid var(--primary);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #fff;
+            /* Icons should be white for better contrast on status colors */
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .meter-icon.active-node {
+            border-color: var(--primary);
+            box-shadow: 0 0 15px var(--primary-glow);
+            transform: scale(1.2);
+            z-index: 1000;
+        }
+
+        .meter-icon.alert-node {
+            border-color: var(--danger);
+            background: var(--danger);
+        }
+
+        /* General Utilities */
+        .btn-action {
+            width: 100%;
+            padding: 0.8rem;
+            border-radius: 12px;
+            border: none;
+            font-weight: 700;
+            cursor: pointer;
+            transition: 0.2s;
+            margin-top: 0.5rem;
+        }
+
+        .btn-action:hover {
+            opacity: 0.9;
+            transform: translateY(-1px);
+        }
+
+        .btn-action:active {
+            transform: translateY(0);
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+            box-shadow: 0 4px 15px var(--primary-glow);
+        }
+
+        /* Custom Scrollbar for Controls */
+        .controls::-webkit-scrollbar {
+            width: 4px;
+        }
+
+        .controls::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 10px;
+        }
+
+        .placeholder {
+            text-align: center;
+            padding: 3rem 1rem;
+            color: var(--text-dim);
+        }
+
+        .placeholder i {
+            font-size: 3rem;
+            display: block;
+            margin-bottom: 1rem;
+            opacity: 0.3;
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Map Canvas -->
+    <div id="simMap"></div>
+
+    <!-- Sidebar: Node Explorer -->
+    <div class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <h2>NETWORK NODES</h2>
+            <button class="toggle-sidebar" onclick="document.getElementById('sidebar').classList.toggle('collapsed')">
+                <i class="fa-solid fa-bars"></i>
+            </button>
+        </div>
+
+        <div class="search-container">
+            <i class="fa-solid fa-magnifying-glass"></i>
+            <input type="text" id="node-search" placeholder="Search infrastructure..." onkeyup="filterNodes()">
+        </div>
+
+        <div class="layer-filters">
+            <h3><i class="fa-solid fa-layer-group"></i> Network Visibility</h3>
+            <div class="filter-item">
+                <span>Pipelines</span>
+                <input type="checkbox" checked onchange="toggleLayer('pipelines', this.checked)">
+            </div>
+            <div class="filter-item">
+                <span>Infrastructure</span>
+                <input type="checkbox" checked onchange="toggleLayer('infra', this.checked)">
+            </div>
+            <div class="filter-item">
+                <span>Citizen Meters</span>
+                <input type="checkbox" checked onchange="toggleLayer('meters', this.checked)">
+            </div>
+            <div class="filter-item">
+                <span>Alerting Nodes</span>
+                <input type="checkbox" checked onchange="toggleLayer('alerts', this.checked)">
+            </div>
+        </div>
+
+        <div class="layer-filters" style="background: rgba(15, 98, 254, 0.05); border-color: rgba(15, 98, 254, 0.1);">
+            <h3><i class="fa-solid fa-gears"></i> System Overview</h3>
+            <div class="param-row">
+                <div class="param-info">
+                    <span style="font-size:0.75rem">Storage Capacity</span>
+                    <span class="param-value" id="val-global-cap" style="font-size:0.75rem">10,000L</span>
+                </div>
+                <input type="range" id="input-global-cap" min="1000" max="50000" step="500" value="10000"
+                    oninput="document.getElementById('val-global-cap').innerText = this.value + 'L'">
+            </div>
+            <div class="param-row">
+                <div class="param-info">
+                    <span style="font-size:0.75rem">Current Level</span>
+                    <span class="param-value" id="val-global-lvl" style="font-size:0.75rem">8,500L</span>
+                </div>
+                <input type="range" id="input-global-lvl" min="0" max="50000" step="100" value="8500"
+                    oninput="document.getElementById('val-global-lvl').innerText = this.value + 'L'">
+            </div>
+            <button class="btn-action btn-primary" style="padding: 0.5rem; font-size: 0.7rem;"
+                onclick="updateGlobalSystem()">SYNC SYSTEM LEVELS</button>
+        </div>
+
+        <div class="node-list" id="nodes-container">
+            <!-- Populated by JS -->
+            <div class="placeholder">
+                <i class="fa-solid fa-satellite-dish"></i>
+                <p>Initializing network...</p>
+            </div>
+        </div>
+
+        <div style="margin-top: 1.5rem; padding-top: 1rem; border-top: 1px solid rgba(0,0,0,0.05)">
+            <a href="/admin_dashboard"
+                style="text-decoration:none; display:flex; align-items:center; gap:10px; color:var(--text-dim); font-size:0.85rem; font-weight:600">
+                <i class="fa-solid fa-arrow-left"></i> RETURN TO ADMIN DASHBOARD
+            </a>
+        </div>
+    </div>
+
+    <button class="expand-sidebar-btn" onclick="document.getElementById('sidebar').classList.remove('collapsed')">
+        <i class="fa-solid fa-chevron-right"></i>
+    </button>
+
+    <button class="expand-right-btn" onclick="document.getElementById('control-panel').classList.remove('collapsed')">
+        <i class="fa-solid fa-chevron-left"></i>
+    </button>
+
+    <!-- Top Bar: Context Info -->
+    <div class="top-bar">
+        <div class="city-info">
+            <div class="city-tag">
+                <i class="fa-solid fa-location-dot"></i> <span id="current-city">PUNE</span>
+            </div>
+            <div class="stat-item">
+                <small>Source</small>
+                <span id="source-name">Khadakwasla Dam</span>
+            </div>
+            <div id="global-stats" style="display:flex; gap:1.5rem">
+                <div class="stat-item">
+                    <small>Storage</small>
+                    <span id="storage-level">8,500 / 10,000 L</span>
+                </div>
+            </div>
+        </div>
+        <div class="network-status" style="display:flex; align-items:center; gap:10px">
+            <div
+                style="width:10px; height:10px; background:var(--success); border-radius:50%; box-shadow: 0 0 10px var(--success)">
+            </div>
+            <span style="font-weight:700; font-size:0.8rem">SIMULATION ENGINE LIVE</span>
+        </div>
+    </div>
+
+    <!-- Simulation Status Box -->
+    <div class="sim-status-box">
+        <div style="display:flex; align-items:center; gap:15px">
+            <span style="font-size:0.75rem; font-weight:800; color:var(--text-dim)">ACTIVE INJECTIONS:</span>
+            <div class="active-injections" id="active-injections-container">
+                <span style="font-size:0.7rem; color:var(--text-dim); opacity:0.6">No active anomalies detected</span>
+            </div>
+        </div>
+        <div style="font-size:0.7rem; font-weight:600; color:var(--text-dim)">
+            <i class="fa-solid fa-clock"></i> <span id="sim-time">--:--:--</span>
+        </div>
+    </div>
+
+    <!-- Right Panel: Injection Controls -->
+    <div class="controls" id="control-panel">
+        <div class="controls-header">
+            <div>
+                <h2 id="current-node-name">MTR-101</h2>
+                <p id="current-node-type" style="font-size:0.75rem; color:var(--text-dim)">CITIZEN METER</p>
+            </div>
+            <div style="display:flex; align-items:center; gap:10px">
+                <span id="current-node-status" class="city-tag"
+                    style="background:var(--success); border-radius:5px">ACTIVE</span>
+                <button class="toggle-sidebar"
+                    onclick="document.getElementById('control-panel').classList.add('collapsed')">
+                    <i class="fa-solid fa-chevron-right"></i>
+                </button>
+            </div>
+        </div>
+
+        <!-- Anomaly Injections -->
+        <div class="control-group">
+            <h3><i class="fa-solid fa-bug"></i> Anomaly Injection</h3>
+            <div class="toggle-grid">
+                <div class="toggle-btn" id="btn-leak" onclick="toggleNodeParam('leak')">
+                    <i class="fa-solid fa-droplet-slash"></i>
+                    <span>Inject Leak</span>
+                </div>
+                <div class="toggle-btn" id="btn-theft" onclick="toggleNodeParam('theft')">
+                    <i class="fa-solid fa-user-secret"></i>
+                    <span>Assign Theft</span>
+                </div>
+                <div class="toggle-btn" id="btn-fault" onclick="toggleNodeParam('fault')">
+                    <i class="fa-solid fa-triangle-exclamation"></i>
+                    <span>Sensor Fault</span>
+                </div>
+                <div class="toggle-btn success-mode" id="btn-active" onclick="toggleNodeParam('is_active')">
+                    <i class="fa-solid fa-plug"></i>
+                    <span>Connection</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Granular Overrides -->
+        <div class="control-group">
+            <h3><i class="fa-solid fa-sliders"></i> Granular Overrides</h3>
+
+            <div class="param-row">
+                <div class="param-info">
+                    <span>Flow Rate</span>
+                    <span class="param-value" id="val-flow">DEF</span>
+                </div>
+                <input type="range" id="input-flow" min="0" max="300" step="1" value="0"
+                    oninput="updateOverrideLabel('flow', this.value)">
+            </div>
+
+            <div class="param-row">
+                <div class="param-info">
+                    <span>Pressure</span>
+                    <span class="param-value" id="val-pres">DEF</span>
+                </div>
+                <input type="range" id="input-pres" min="0" max="150" step="1" value="0"
+                    oninput="updateOverrideLabel('pres', this.value)">
+            </div>
+
+            <div class="param-row">
+                <div class="param-info">
+                    <span>Acoustic Noise</span>
+                    <span class="param-value" id="val-acoustic">DEF</span>
+                </div>
+                <input type="range" id="input-acoustic" min="0" max="100" step="1" value="0"
+                    oninput="updateOverrideLabel('acoustic', this.value)">
+            </div>
+
+            <div class="param-row">
+                <div class="param-info">
+                    <span>pH Balance</span>
+                    <span class="param-value" id="val-ph">7.2</span>
+                </div>
+                <input type="range" id="input-ph" min="0" max="14" step="0.1" value="7.2"
+                    oninput="updateOverrideLabel('ph', this.value)">
+            </div>
+
+            <div class="param-row">
+                <div class="param-info">
+                    <span>Turbidity</span>
+                    <span class="param-value" id="val-turbidity">DEF</span>
+                </div>
+                <input type="range" id="input-turbidity" min="0" max="10" step="0.1" value="0"
+                    oninput="updateOverrideLabel('turbidity', this.value)">
+            </div>
+
+            <div class="param-row">
+                <div class="param-info">
+                    <span>Chlorine</span>
+                    <span class="param-value" id="val-chlorine">DEF</span>
+                </div>
+                <input type="range" id="input-chlorine" min="0" max="5" step="0.1" value="0"
+                    oninput="updateOverrideLabel('chlorine', this.value)">
+            </div>
+
+            <button class="btn-action btn-primary" onclick="applyBatchOverrides()">APPLY GRANULAR OVERRIDES</button>
+            <button class="btn-action"
+                style="background:rgba(255,255,255,0.05); color:white; border:1px solid rgba(255,255,255,0.1)"
+                onclick="resetOverrides()">RESET ALL OVERRIDES</button>
+        </div>
+
+        <!-- Billing Control -->
+        <div class="control-group">
+            <h3><i class="fa-solid fa-file-invoice-dollar"></i> Billing & Access</h3>
+            <div style="display:flex; gap:10px">
+                <button class="btn-action" style="background:#ef4444; color:white"
+                    onclick="forceSuspension(true)">SUSPEND</button>
+                <button class="btn-action" style="background:#10b981; color:white"
+                    onclick="forceSuspension(false)">RESTORE</button>
+            </div>
+            <button class="btn-action" style="background:#1e293b; color:#94a3b8; margin-top:10px"
+                onclick="resetBilling()">RESET NODE BILLING</button>
+        </div>
+    </div>
+
+    <!-- Toast Notification -->
+    <div id="toast"
+        style="position:fixed; bottom:20px; left:50%; transform:translateX(-50%); background:var(--primary); color:white; padding:1rem 2rem; border-radius:12px; z-index:10000; box-shadow: 0 10px 30px rgba(0,0,0,0.5); display:none; font-weight:700">
+        Changes Synced with Engine
+    </div>
+
+    <script type="module" src="simulation.js"></script>
+</body>
+
+</html>

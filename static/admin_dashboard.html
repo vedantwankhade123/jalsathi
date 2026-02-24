@@ -1,0 +1,475 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JALSATHI Admin | Operations</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <link rel="stylesheet" href="admin.css">
+</head>
+
+<body>
+    <div class="dashboard">
+        <aside class="sidebar">
+            <div class="brand">
+                <span>💧 JALSATHI</span>
+            </div>
+            <nav>
+                <a class="nav-item active" data-section="overview"><i class="fa-solid fa-chart-pie"></i> Overview</a>
+                <a class="nav-item" data-section="analytics"><i class="fa-solid fa-chart-line"></i> Analytics</a>
+                <a class="nav-item" data-section="map"><i class="fa-solid fa-map-location-dot"></i> Network Map</a>
+                <a class="nav-item" data-section="meters"><i class="fa-solid fa-gauge-high"></i> Register Meters</a>
+                <a class="nav-item" data-section="citizens"><i class="fa-solid fa-users"></i> Citizens</a>
+                <a class="nav-item" data-section="billing"><i class="fa-solid fa-file-invoice-dollar"></i> Billing</a>
+
+                <a class="nav-item" data-section="settings"><i class="fa-solid fa-gear"></i> Settings</a>
+            </nav>
+            <div class="sidebar-footer">
+                <div class="admin-profile">
+                    <img id="admin-avatar" src="" alt="A" class="avatar">
+                    <div>
+                        <p class="admin-name" id="user-name">Admin</p>
+                        <p class="admin-loc" id="user-city">—</p>
+                    </div>
+                </div>
+                <button class="logout-btn" id="btn-logout"><i class="fa-solid fa-right-from-bracket"></i> Sign
+                    Out</button>
+            </div>
+        </aside>
+
+        <main class="main">
+            <header class="top-bar">
+                <h1 id="page-title">Overview</h1>
+                <p id="page-desc">Real-time monitoring & network status</p>
+            </header>
+
+            <!-- OVERVIEW -->
+            <div class="section active-section" id="sec-overview">
+                <div class="kpi-row">
+                    <div class="kpi">
+                        <p class="kpi-label"><i class="fa-solid fa-gauge"></i> Total Meters</p>
+                        <h2 id="total-meters">0</h2>
+                    </div>
+                    <div class="kpi">
+                        <p class="kpi-label"><i class="fa-solid fa-circle-check"></i> Active</p>
+                        <h2 id="active-meters">0</h2>
+                    </div>
+                    <div class="kpi">
+                        <p class="kpi-label"><i class="fa-solid fa-circle-dot"></i> Available</p>
+                        <h2 id="available-meters">0</h2>
+                    </div>
+                    <div class="kpi kpi-alert">
+                        <p class="kpi-label"><i class="fa-solid fa-triangle-exclamation"></i> Alerts Today</p>
+                        <h2 id="alert-count">0</h2>
+                    </div>
+                </div>
+                <div class="metrics-row">
+                    <div class="metric-card">
+                        <div class="metric-icon" style="background:#eff6ff;color:#2563eb;"><i
+                                class="fa-solid fa-droplet"></i></div>
+                        <div>
+                            <p class="metric-label">Pressure</p>
+                            <h3 id="metric-pressure">-- PSI</h3>
+                        </div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-icon" style="background:#f0fdf4;color:#16a34a;"><i
+                                class="fa-solid fa-flask"></i></div>
+                        <div>
+                            <p class="metric-label">pH Level</p>
+                            <h3 id="metric-ph">--</h3>
+                        </div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-icon" style="background:#fefce8;color:#ca8a04;"><i
+                                class="fa-solid fa-water"></i></div>
+                        <div>
+                            <p class="metric-label">Flow Rate</p>
+                            <h3 id="metric-flow">-- L/min</h3>
+                        </div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-icon" style="background:#fdf2f8;color:#db2777;"><i
+                                class="fa-solid fa-microscope"></i></div>
+                        <div>
+                            <p class="metric-label">Turbidity</p>
+                            <h3 id="metric-turbidity">-- NTU</h3>
+                        </div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-icon" style="background:#f5f3ff;color:#7c3aed;"><i
+                                class="fa-solid fa-vial"></i></div>
+                        <div>
+                            <p class="metric-label">Chlorine</p>
+                            <h3 id="metric-chlorine">-- mg/L</h3>
+                        </div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-icon" style="background:#fff7ed;color:#ea580c;"><i
+                                class="fa-solid fa-temperature-half"></i></div>
+                        <div>
+                            <p class="metric-label">Temperature</p>
+                            <h3 id="metric-temp">-- °C</h3>
+                        </div>
+                    </div>
+                </div>
+                <div class="overview-grid">
+                    <div class="card map-card-overview">
+                        <div class="card-head">
+                            <h3><i class="fa-solid fa-map-location-dot"></i> Distribution Network</h3>
+                            <div class="map-legend">
+                                <span class="legend-item"><span class="legend-dot"
+                                        style="background:#1e3a5f;"></span>Source</span>
+                                <span class="legend-item"><span class="legend-dot"
+                                        style="background:#dc2626;"></span>WTP</span>
+                                <span class="legend-item"><span class="legend-dot"
+                                        style="background:#2563eb;"></span>Active</span>
+                                <span class="legend-item"><span class="legend-dot"
+                                        style="background:#10b981;"></span>Free</span>
+                            </div>
+                        </div>
+                        <div id="waterMap"></div>
+                    </div>
+                    <div class="card">
+                        <h3><i class="fa-solid fa-bell"></i> AI Alert Feed</h3>
+                        <div class="alert-feed" id="alerts-list">
+                            <p class="muted centered">Waiting for telemetry...</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="grid-2">
+                    <div class="card">
+                        <h3><i class="fa-solid fa-building"></i> Colony Distribution</h3>
+                        <div id="colony-stats">
+                            <p class="muted centered">Loading...</p>
+                        </div>
+                    </div>
+                    <div class="card">
+                        <h3><i class="fa-solid fa-list"></i> Recent Meters</h3>
+                        <div class="table-wrap">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Meter</th>
+                                        <th>Status</th>
+                                        <th>Colony</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="recent-meters-body"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ANALYTICS -->
+            <div class="section" id="sec-analytics">
+                <div class="kpi-row">
+                    <div class="kpi">
+                        <p class="kpi-label"><i class="fa-solid fa-bug"></i> Total Anomalies</p>
+                        <h2 id="total-anomalies">0</h2>
+                    </div>
+                    <div class="kpi kpi-theft">
+                        <p class="kpi-label"><i class="fa-solid fa-user-secret"></i> Theft Detected</p>
+                        <h2 id="theft-count">0</h2>
+                    </div>
+                    <div class="kpi">
+                        <p class="kpi-label"><i class="fa-solid fa-droplet-slash"></i> Leaks</p>
+                        <h2 id="leak-count">0</h2>
+                    </div>
+                    <div class="kpi">
+                        <p class="kpi-label"><i class="fa-solid fa-arrow-trend-down"></i> Pressure Drops</p>
+                        <h2 id="pressure-drop-count">0</h2>
+                    </div>
+                </div>
+                <div class="grid-2">
+                    <div class="card chart-card">
+                        <h3><i class="fa-solid fa-chart-area"></i> Water Quality Trends</h3>
+                        <p class="card-desc">pH, Turbidity, Chlorine over 24h.</p><canvas id="chartQuality"></canvas>
+                    </div>
+                    <div class="card chart-card">
+                        <h3><i class="fa-solid fa-chart-line"></i> Flow & Pressure</h3>
+                        <p class="card-desc">Network flow (L/min) and pressure (PSI).</p><canvas
+                            id="chartFlow"></canvas>
+                    </div>
+                </div>
+                <div class="grid-2">
+                    <div class="card chart-card">
+                        <h3><i class="fa-solid fa-chart-pie"></i> Anomaly Breakdown</h3>
+                        <p class="card-desc">Distribution of anomaly types.</p><canvas id="chartAnomaly"></canvas>
+                    </div>
+                    <div class="card chart-card">
+                        <h3><i class="fa-solid fa-user-secret"></i> Theft & Leak Detection</h3>
+                        <p class="card-desc">Incident timeline.</p><canvas id="chartTheft"></canvas>
+                    </div>
+                </div>
+                <div class="card">
+                    <h3><i class="fa-solid fa-scroll"></i> Anomaly Event Log</h3>
+                    <div class="table-wrap">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Time</th>
+                                    <th>Node</th>
+                                    <th>Type</th>
+                                    <th>Severity</th>
+                                    <th>Details</th>
+                                </tr>
+                            </thead>
+                            <tbody id="anomaly-log-body"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- FULL MAP -->
+            <div class="section" id="sec-map">
+                <div class="card map-card-full">
+                    <div class="card-head">
+                        <h3><i class="fa-solid fa-earth-americas"></i> Full Network Topology</h3><span
+                            class="live-dot"><i class="fa-solid fa-circle"></i> LIVE</span>
+                    </div>
+                    <div id="waterMapFull"></div>
+                </div>
+            </div>
+
+            <!-- REGISTER METERS -->
+            <div class="section" id="sec-meters">
+                <div class="grid-2">
+                    <div class="card">
+                        <h3><i class="fa-solid fa-plus-circle"></i> Allocate New Meter</h3>
+                        <p class="card-desc">Create a meter and authorize a citizen email.</p>
+                        <div class="form-stack">
+                            <div class="form-row-sm">
+                                <input type="text" id="new-meter-id" placeholder="Meter ID" class="compact-input"
+                                    readonly>
+                                <button class="btn-sm btn-outline" id="btn-gen-id"
+                                    style="flex:0 0 auto;padding:0.42rem 0.8rem;"><i class="fa-solid fa-bolt"></i>
+                                    Generate</button>
+                            </div>
+                            <input type="email" id="new-meter-email" placeholder="Authorized Citizen Email"
+                                class="compact-input">
+                            <select id="new-meter-type" class="compact-input">
+                                <option value="Citizen">Citizen (House)</option>
+                                <option value="Hospital">Hospital</option>
+                                <option value="Firestation">Firestation</option>
+                                <option value="School">School</option>
+                                <option value="Central Hub">Central Hub</option>
+                            </select>
+                            <input type="text" id="location-search" placeholder="Search location by name..."
+                                class="compact-input">
+                            <div class="form-row-sm">
+                                <input type="number" id="new-meter-lat" placeholder="Latitude" class="compact-input"
+                                    step="any">
+                                <input type="number" id="new-meter-lng" placeholder="Longitude" class="compact-input"
+                                    step="any">
+                            </div>
+                            <div class="form-row-sm">
+                                <button class="btn-sm" id="btn-add-meter"><i class="fa-solid fa-check"></i>
+                                    Authorize</button>
+                                <button class="btn-sm btn-outline" id="btn-use-location"><i
+                                        class="fa-solid fa-location-crosshairs"></i> GPS</button>
+                                <button class="btn-sm btn-outline" id="btn-search-loc"><i
+                                        class="fa-solid fa-magnifying-glass"></i> Search</button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card">
+                        <h3><i class="fa-solid fa-book"></i> How It Works</h3>
+                        <div class="guide-steps">
+                            <div class="guide-step"><span class="step-num">1</span>
+                                <div><strong>Generate Meter ID</strong>
+                                    <p class="muted">Click ⚡ Generate for unique ID.</p>
+                                </div>
+                            </div>
+                            <div class="guide-step"><span class="step-num">2</span>
+                                <div><strong>Enter email & location</strong>
+                                    <p class="muted">GPS, search, or manual coords.</p>
+                                </div>
+                            </div>
+                            <div class="guide-step"><span class="step-num">3</span>
+                                <div><strong>Citizen registers</strong>
+                                    <p class="muted">Matching Meter ID + email + OTP.</p>
+                                </div>
+                            </div>
+                            <div class="guide-step"><span class="step-num">4</span>
+                                <div><strong>Meter activates</strong>
+                                    <p class="muted">Location captured, dashboard ready.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="card">
+                    <h3><i class="fa-solid fa-table-list"></i> All Meters</h3>
+                    <div class="table-wrap">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Meter ID</th>
+                                    <th>Coordinates</th>
+                                    <th>Status</th>
+                                    <th>Email</th>
+                                    <th>Colony</th>
+                                </tr>
+                            </thead>
+                            <tbody id="meters-table-body"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- CITIZENS -->
+            <div class="section" id="sec-citizens">
+                <div class="card">
+                    <h3><i class="fa-solid fa-users"></i> Registered Citizens</h3>
+                    <p class="card-desc">Citizens who completed OTP and linked meters.</p>
+                    <div class="table-wrap">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Email</th>
+                                    <th>Name</th>
+                                    <th>Meter ID</th>
+                                    <th>Role</th>
+                                </tr>
+                            </thead>
+                            <tbody id="citizens-table-body"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- BILLING -->
+            <div class="section" id="sec-billing">
+                <div class="kpi-row">
+                    <div class="kpi">
+                        <p class="kpi-label">Total Revenue</p>
+                        <h2 id="total-revenue">₹0.00</h2>
+                    </div>
+                    <div class="kpi">
+                        <p class="kpi-label">Total Usage (L)</p>
+                        <h2 id="admin-total-liters">0 L</h2>
+                    </div>
+                    <div class="kpi">
+                        <p class="kpi-label">Pending Payments</p>
+                        <h2>12</h2>
+                    </div>
+                    <div class="kpi">
+                        <p class="kpi-label">Rate (L)</p>
+                        <h2>₹0.05</h2>
+                    </div>
+                </div>
+                <div class="card">
+                    <h3><i class="fa-solid fa-table-list"></i> Network Billing Summary</h3>
+                    <div class="table-wrap">
+                        <table id="admin-billing-table">
+                            <thead>
+                                <tr>
+                                    <th>Node ID</th>
+                                    <th>City</th>
+                                    <th>Consumption (L)</th>
+                                    <th>Amount Due</th>
+                                    <th>Action</th>
+                                </tr>
+                            </thead>
+                            <tbody id="admin-billing-body">
+                                <tr>
+                                    <td colspan="5" class="centered">Loading billing data...</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- SETTINGS -->
+            <div class="section" id="sec-settings">
+                <div class="grid-2">
+                    <div class="card">
+                        <h3><i class="fa-solid fa-location-dot"></i> Network Location</h3>
+                        <p class="card-desc">Select your state and city. The map and network will update.</p>
+                        <div class="form-stack">
+                            <select id="settings-state" class="compact-input">
+                                <option value="">Select State</option>
+                            </select>
+                            <select id="settings-city" class="compact-input">
+                                <option value="">Select state first</option>
+                            </select>
+                            <button class="btn-sm" id="btn-save-settings"><i class="fa-solid fa-floppy-disk"></i> Save &
+                                Apply</button>
+                            <div id="settings-msg" class="success-text"></div>
+                        </div>
+                    </div>
+                    <div class="card">
+                        <h3><i class="fa-solid fa-id-card"></i> Admin Profile</h3>
+                        <div class="profile-info">
+                            <div class="info-row"><span class="info-label"><i class="fa-solid fa-user"></i>
+                                    Name</span><span id="profile-name">—</span></div>
+                            <div class="info-row"><span class="info-label"><i class="fa-solid fa-envelope"></i>
+                                    Email</span><span id="profile-email">—</span></div>
+                            <div class="info-row"><span class="info-label"><i class="fa-solid fa-city"></i>
+                                    City</span><span id="profile-city">—</span></div>
+                            <div class="info-row"><span class="info-label"><i class="fa-solid fa-map"></i>
+                                    State</span><span id="profile-state">—</span></div>
+                            <div class="info-row"><span class="info-label"><i class="fa-solid fa-flag"></i>
+                                    Country</span><span id="profile-country">—</span></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <div class="modal-overlay" id="logout-modal">
+        <div class="modal-box">
+            <h3><i class="fa-solid fa-right-from-bracket"></i> Sign Out?</h3>
+            <p>Are you sure you want to sign out?</p>
+            <div class="modal-actions">
+                <button class="btn-sm btn-outline" id="btn-cancel-logout">Cancel</button>
+                <button class="btn-sm btn-danger" id="btn-confirm-logout">Sign Out</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="toast-container"></div>
+
+    <!-- Meter Info Modal -->
+    <div class="modal-overlay" id="meter-modal">
+        <div class="modal-box" style="text-align:left;width:380px;">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.6rem;">
+                <h3 style="margin:0"><i class="fa-solid fa-house-chimney"></i> <span id="mm-title">Meter</span></h3>
+                <button onclick="document.getElementById('meter-modal').classList.remove('show')"
+                    style="background:none;border:none;font-size:1.1rem;cursor:pointer;color:#64748b"><i
+                        class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div class="profile-info" id="mm-body">
+                <div class="info-row"><span class="info-label"><i class="fa-solid fa-hashtag"></i> Meter ID</span><span
+                        id="mm-id">—</span></div>
+                <div class="info-row"><span class="info-label"><i class="fa-solid fa-circle-info"></i> Type</span><span
+                        id="mm-type">—</span></div>
+                <div class="info-row"><span class="info-label"><i class="fa-solid fa-envelope"></i> Email</span><span
+                        id="mm-email">—</span></div>
+                <div class="info-row"><span class="info-label"><i class="fa-solid fa-signal"></i> Status</span><span
+                        id="mm-status">—</span></div>
+                <div class="info-row"><span class="info-label"><i class="fa-solid fa-building"></i> Colony</span><span
+                        id="mm-colony">—</span></div>
+                <div class="info-row"><span class="info-label"><i class="fa-solid fa-location-dot"></i>
+                        Coordinates</span><span id="mm-coords">—</span></div>
+                <div class="info-row"><span class="info-label"><i class="fa-solid fa-city"></i> City</span><span
+                        id="mm-city">—</span></div>
+                <div class="info-row" id="mm-parent-row" style="display:none"><span class="info-label"><i
+                            class="fa-solid fa-link"></i> Parent Meter</span><span id="mm-parent">—</span></div>
+            </div>
+        </div>
+    </div>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+    <script type="module" src="admin.js"></script>
+</body>
+
+</html>

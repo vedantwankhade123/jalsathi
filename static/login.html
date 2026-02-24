@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JALSATHI | Authentication</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="login.css">
+</head>
+
+<body>
+    <div class="split-view">
+        <div class="left-panel">
+            <div class="image-container">
+                <a href="/" class="back-home"><i class="fa-solid fa-arrow-left"></i> Back to Home</a>
+                <!-- Text-based Logo & Overlay Content -->
+                <div class="overlay-content">
+                    <div class="overlay-text">
+                        <h2>Smart Water Management</h2>
+                        <p>Join thousands of citizens and administrators working together to secure our water future
+                            through AI-powered monitoring and real-time analytics.</p>
+                    </div>
+                </div>
+                <img src="/auth-image.png" alt="Water Management" class="illustration">
+                <div class="image-fade-overlay"></div>
+            </div>
+        </div>
+
+        <div class="right-panel">
+            <!-- SIGN IN -->
+            <div class="auth-box" id="view-signin">
+                <h2 class="auth-title">Welcome back</h2>
+                <p class="auth-subtitle">Sign in to your JALSATHI account.</p>
+                <div class="input-group">
+                    <label>Email Address</label>
+                    <input type="email" id="login-email" placeholder="e.g. citizen@example.com">
+                </div>
+                <div class="input-group">
+                    <label>Password</label>
+                    <div class="password-wrapper">
+                        <input type="password" id="login-password" placeholder="••••••••">
+                        <button type="button" class="toggle-eye" onclick="togglePassword('login-password', this)"><i
+                                class="fa-solid fa-eye"></i></button>
+                    </div>
+                </div>
+                <button class="btn-primary" id="btn-login">
+                    <span class="btn-text"><i class="fa-solid fa-right-to-bracket"></i> Continue</span>
+                    <i class="fa-solid fa-spinner fa-spin loader"></i>
+                </button>
+                <div id="login-error" class="error-text"></div>
+
+                <div class="auth-shortcuts">
+                    <a href="/simulation.html" title="Simulation Center"><i class="fa-solid fa-flask-vial"></i></a>
+                    <a href="/" title="AI Dashboard"><i class="fa-solid fa-chart-line"></i></a>
+                </div>
+
+                <p class="switch-text">Don't have an account? <a href="#" onclick="showView('register')">Register
+                        here</a></p>
+                <div class="ai-guard-access">
+                    <a href="/ai_engine" class="ai-guard-link"><i class="fa-solid fa-robot"></i> View Live AI Guard
+                        Dashboard</a>
+                </div>
+            </div>
+
+            <!-- REGISTER -->
+            <div class="auth-box" id="view-register" style="display:none;">
+                <h2 class="auth-title">Create Account</h2>
+                <p class="auth-subtitle">Join JALSATHI as a Citizen or Admin.</p>
+                <div class="auth-toggle">
+                    <button class="toggle-btn active" id="toggle-citizen" onclick="switchRole('citizen')"><i
+                            class="fa-solid fa-user"></i> Citizen</button>
+                    <button class="toggle-btn" id="toggle-admin" onclick="switchRole('admin')"><i
+                            class="fa-solid fa-user-shield"></i> Admin</button>
+                </div>
+
+                <!-- CITIZEN FORM (Multi-step) -->
+                <div id="form-citizen" class="form-section active-form">
+                    <!-- Step 1: Basic Info -->
+                    <div id="cit-step-1">
+                        <div class="input-group">
+                            <label>Meter ID</label>
+                            <input type="text" id="reg-meter-id" placeholder="e.g. MTR-102">
+                        </div>
+                        <div class="form-row">
+                            <div class="input-group">
+                                <label>Full Name</label>
+                                <input type="text" id="reg-cit-name" placeholder="John Doe">
+                            </div>
+                            <div class="input-group">
+                                <label>Registered Email</label>
+                                <input type="email" id="reg-cit-email" placeholder="you@domain.com">
+                            </div>
+                        </div>
+                        <div class="input-group">
+                            <label>Password</label>
+                            <div class="password-wrapper">
+                                <input type="password" id="reg-cit-password" placeholder="••••••••">
+                                <button type="button" class="toggle-eye"
+                                    onclick="togglePassword('reg-cit-password', this)"><i
+                                        class="fa-solid fa-eye"></i></button>
+                            </div>
+                        </div>
+                        <button class="btn-primary" onclick="nextStep('cit', 2)">
+                            <span class="btn-text">Continue <i class="fa-solid fa-arrow-right"></i></span>
+                            <i class="fa-solid fa-spinner fa-spin loader"></i>
+                        </button>
+                    </div>
+
+                    <!-- Step 2: Location & Email OTP -->
+                    <div id="cit-step-2" style="display: none;">
+                        <button class="btn-back" onclick="prevStep('cit', 1)"><i class="fa-solid fa-arrow-left"></i>
+                            Back</button>
+                        <div class="form-row mt-2">
+                            <div class="input-group">
+                                <label>State</label>
+                                <select id="reg-cit-state">
+                                    <option value="">Select State</option>
+                                </select>
+                            </div>
+                            <div class="input-group">
+                                <label>City</label>
+                                <select id="reg-cit-city">
+                                    <option value="">Select state first</option>
+                                </select>
+                            </div>
+                        </div>
+                        <button class="btn-primary" id="btn-send-otp">
+                            <span class="btn-text"><i class="fa-solid fa-paper-plane"></i> Send Email OTP</span>
+                            <i class="fa-solid fa-spinner fa-spin loader"></i>
+                        </button>
+                        <div id="reg-cit-error" class="error-text"></div>
+                    </div>
+
+                    <!-- Step 3: OTP Verification -->
+                    <div id="cit-step-3" style="display: none;">
+                        <button class="btn-back" onclick="prevStep('cit', 2)"><i class="fa-solid fa-arrow-left"></i>
+                            Change Email</button>
+                        <p class="otp-message mt-2"><i class="fa-solid fa-envelope-open-text"></i> A 6-digit
+                            verification code has been sent to
+                            your email address.</p>
+                        <div class="input-group">
+                            <label>Enter Email OTP</label>
+                            <input type="text" id="reg-cit-otp" maxlength="6" placeholder="123456">
+                        </div>
+                        <button class="btn-primary" id="btn-verify-otp">
+                            <span class="btn-text"><i class="fa-solid fa-check-double"></i> Verify & Register</span>
+                            <i class="fa-solid fa-spinner fa-spin loader"></i>
+                        </button>
+                        <div id="otp-error" class="error-text"></div>
+                    </div>
+                </div>
+
+                <!-- ADMIN FORM (Multi-step) -->
+                <div id="form-admin" class="form-section">
+                    <!-- Step 1: Personal Info -->
+                    <div id="adm-step-1">
+                        <div class="form-row">
+                            <div class="input-group">
+                                <label>Full Name</label>
+                                <input type="text" id="reg-admin-name" placeholder="Name">
+                            </div>
+                            <div class="input-group">
+                                <label>Email</label>
+                                <input type="email" id="reg-admin-email" placeholder="name@jalsathi.gov">
+                            </div>
+                        </div>
+                        <div class="input-group">
+                            <label>Password</label>
+                            <div class="password-wrapper">
+                                <input type="password" id="reg-admin-password" placeholder="••••••••">
+                                <button type="button" class="toggle-eye"
+                                    onclick="togglePassword('reg-admin-password', this)"><i
+                                        class="fa-solid fa-eye"></i></button>
+                            </div>
+                        </div>
+                        <button class="btn-primary" onclick="nextStep('adm', 2)">
+                            <span class="btn-text">Continue <i class="fa-solid fa-arrow-right"></i></span>
+                            <i class="fa-solid fa-spinner fa-spin loader"></i>
+                        </button>
+                    </div>
+
+                    <!-- Step 2: Location & Authorization -->
+                    <div id="adm-step-2" style="display: none;">
+                        <button class="btn-back" onclick="prevStep('adm', 1)"><i class="fa-solid fa-arrow-left"></i>
+                            Back</button>
+                        <div class="form-row mt-2">
+                            <div class="input-group">
+                                <label>State</label>
+                                <select id="reg-admin-state">
+                                    <option value="">Select State</option>
+                                </select>
+                            </div>
+                            <div class="input-group">
+                                <label>City</label>
+                                <select id="reg-admin-city">
+                                    <option value="">Select state first</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="input-group">
+                            <label>Secret Authorization Key</label>
+                            <div class="password-wrapper">
+                                <input type="password" id="reg-admin-secret" placeholder="Admin Invite Code">
+                                <button type="button" class="toggle-eye"
+                                    onclick="togglePassword('reg-admin-secret', this)"><i
+                                        class="fa-solid fa-eye"></i></button>
+                            </div>
+                        </div>
+                        <button class="btn-primary" id="btn-register-admin">
+                            <span class="btn-text"><i class="fa-solid fa-user-shield"></i> Register Admin</span>
+                            <i class="fa-solid fa-spinner fa-spin loader"></i>
+                        </button>
+                        <div id="reg-admin-error" class="error-text"></div>
+                    </div>
+                </div>
+
+                <div class="auth-shortcuts">
+                    <a href="/simulation.html" title="Simulation Center"><i class="fa-solid fa-flask-vial"></i></a>
+                    <a href="/" title="AI Dashboard"><i class="fa-solid fa-chart-line"></i></a>
+                </div>
+
+                <p class="switch-text">Already have an account? <a href="#" onclick="showView('signin')">Sign In</a></p>
+            </div>
+        </div>
+    </div>
+    <script type="module" src="login.js"></script>
+</body>
+
+</html>
