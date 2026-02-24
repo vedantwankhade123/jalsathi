@@ -9,7 +9,11 @@ const CITY_DATA = {
 const userEmail = localStorage.getItem('user_email');
 const userRole = localStorage.getItem('user_role');
 
-if (!userEmail || userRole !== 'citizen') window.location.href = '/login';
+console.log("Citizen Dashboard Module Initializing...");
+if (!userEmail || userRole !== 'citizen') {
+    console.warn("Unauthorized access or missing session - Redirecting to login");
+    window.location.href = '/login';
+}
 
 let currentMeterId = null;
 let telemetryTimer = null;
@@ -20,8 +24,10 @@ let pipeLine = null;
 let hubMarker = null;
 
 async function initDashboard() {
+    console.log("initDashboard starting for:", userEmail);
     try {
         const userRef = doc(db, 'users', userEmail);
+        console.log("Fetching user document...");
         const userSnap = await getDoc(userRef);
 
         if (userSnap.exists()) {
@@ -47,13 +53,15 @@ async function initDashboard() {
             // Start Telemetry Polling
             startTelemetry();
 
-            // Setup Modal Listeners
+            // setupModalListeners is moved here to ensure links work
             setupModalListeners();
+            console.log("Dashboard initialization complete.");
         } else {
-            showToast("No meter linked to this account.");
+            console.error("User record not found in Firestore for email:", userEmail);
+            showToast("No account data found for this user.");
         }
     } catch (err) {
-        console.error("Dashboard error:", err);
+        console.error("CRITICAL Dashboard Error:", err);
     }
 }
 
@@ -436,4 +444,5 @@ function updateMapWithTelemetry(data) {
 
 /* Handled in setupModalListeners */
 
-window.onload = initDashboard;
+// Initialize immediately (module scripts run after DOM is parsed anyway)
+initDashboard();

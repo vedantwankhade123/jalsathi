@@ -27,6 +27,13 @@ OTP_EXPIRY_SECONDS = 300  # 5 minutes
 @app.route('/api/config/firebase')
 def get_firebase_config():
     """Serve Firebase configuration from environment variables."""
+    keys = ["FIREBASE_API_KEY", "FIREBASE_AUTH_DOMAIN", "FIREBASE_PROJECT_ID", 
+            "FIREBASE_STORAGE_BUCKET", "FIREBASE_MESSAGING_SENDER_ID", "FIREBASE_APP_ID"]
+    
+    missing = [k for k in keys if not os.getenv(k)]
+    if missing:
+        print(f"WARNING: Missing Firebase environment variables: {', '.join(missing)}")
+        
     return jsonify({
         "apiKey": os.getenv("FIREBASE_API_KEY"),
         "authDomain": os.getenv("FIREBASE_AUTH_DOMAIN"),
